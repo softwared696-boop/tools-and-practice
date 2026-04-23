@@ -1,0 +1,8 @@
+Order Deny,Allow
+Deny from all
+Options -Indexes
+
+<FilesMatch "\.(log|txt)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
