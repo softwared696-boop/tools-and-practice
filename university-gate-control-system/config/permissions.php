@@ -1,147 +1,95 @@
 <?php
 /**
  * Role Permission Matrix
- * Defines permissions for each role
+ * Define permissions for each role
  */
 
-// Prevent direct access
-if (!defined('APP_NAME')) {
-    die('Direct access not permitted');
-}
-
-// Permission definitions
-define('PERMISSIONS', [
-    'gate_scan' => 'Access gate scanning interface',
-    'access_control' => 'Allow/deny entry and exit',
-    'view_logs' => 'View access and system logs',
-    'report_incidents' => 'Report security incidents',
-    'manage_users' => 'Manage user accounts',
-    'manage_settings' => 'Manage system settings',
-    'manage_materials' => 'Manage material permissions',
-    'approve_materials' => 'Approve material movements',
-    'manage_visitors' => 'Register and manage visitors',
-    'manage_gates' => 'Manage gate configurations',
-    'manage_incidents' => 'Manage and resolve incidents',
-    'view_reports' => 'View system reports',
-    'export_reports' => 'Export reports to PDF/CSV',
-    'manage_roles' => 'Assign and manage roles',
-    'audit_access' => 'Access audit trails',
-    'escalate_incidents' => 'Escalate incidents to higher authority'
-]);
-
-// Role permission mapping
+// Role permissions configuration
 $rolePermissions = [
     'guard' => [
         'gate_scan' => true,
-        'access_control' => true,
         'view_logs' => true,
-        'report_incidents' => true,
-        'manage_users' => false,
-        'manage_settings' => false,
-        'manage_materials' => false,
-        'approve_materials' => false,
-        'manage_visitors' => false,
-        'manage_gates' => false,
-        'manage_incidents' => false,
-        'view_reports' => false,
-        'export_reports' => false,
-        'manage_roles' => false,
-        'audit_access' => false,
-        'escalate_incidents' => false
+        'view_own_logs' => true,
+        'report_incident' => true,
+        'manage_visitors' => true,
+        'material_inspection' => true,
+        'user_management' => false,
+        'admin_access' => false,
+        'system_settings' => false
     ],
     'admin' => [
         'gate_scan' => true,
-        'access_control' => true,
         'view_logs' => true,
-        'report_incidents' => true,
-        'manage_users' => true,
-        'manage_settings' => false,
-        'manage_materials' => true,
-        'approve_materials' => true,
-        'manage_visitors' => true,
-        'manage_gates' => true,
+        'view_all_logs' => true,
+        'generate_reports' => true,
         'manage_incidents' => true,
-        'view_reports' => true,
-        'export_reports' => true,
-        'manage_roles' => false,
-        'audit_access' => false,
-        'escalate_incidents' => true
+        'user_management' => true,
+        'manage_users' => true,
+        'manage_students' => true,
+        'manage_staff' => true,
+        'admin_access' => true,
+        'system_settings' => false,
+        'audit_access' => false
     ],
     'main_admin' => [
         'gate_scan' => true,
-        'access_control' => true,
         'view_logs' => true,
-        'report_incidents' => true,
-        'manage_users' => true,
-        'manage_settings' => true,
-        'manage_materials' => true,
-        'approve_materials' => true,
-        'manage_visitors' => true,
-        'manage_gates' => true,
+        'view_all_logs' => true,
+        'generate_reports' => true,
         'manage_incidents' => true,
-        'view_reports' => true,
-        'export_reports' => true,
-        'manage_roles' => true,
+        'user_management' => true,
+        'manage_users' => true,
+        'manage_students' => true,
+        'manage_staff' => true,
+        'admin_access' => true,
+        'system_settings' => true,
+        'admin_management' => true,
         'audit_access' => true,
-        'escalate_incidents' => true
+        'full_access' => true
     ],
     'student' => [
+        'view_own_logs' => true,
+        'request_material_permission' => true,
+        'view_profile' => true,
+        'edit_profile' => true,
         'gate_scan' => false,
-        'access_control' => false,
-        'view_logs' => false,
-        'report_incidents' => false,
-        'manage_users' => false,
-        'manage_settings' => false,
-        'manage_materials' => false,
-        'approve_materials' => false,
-        'manage_visitors' => false,
-        'manage_gates' => false,
-        'manage_incidents' => false,
-        'view_reports' => false,
-        'export_reports' => false,
-        'manage_roles' => false,
-        'audit_access' => false,
-        'escalate_incidents' => false
+        'admin_access' => false
     ],
     'staff' => [
+        'view_own_logs' => true,
+        'request_material_permission' => true,
+        'approve_materials' => true,
+        'view_profile' => true,
+        'edit_profile' => true,
         'gate_scan' => false,
-        'access_control' => false,
-        'view_logs' => false,
-        'report_incidents' => false,
-        'manage_users' => false,
-        'manage_settings' => false,
-        'manage_materials' => false,
-        'approve_materials' => false,
-        'manage_visitors' => false,
-        'manage_gates' => false,
-        'manage_incidents' => false,
-        'view_reports' => false,
-        'export_reports' => false,
-        'manage_roles' => false,
-        'audit_access' => false,
-        'escalate_incidents' => false
+        'admin_access' => false
     ]
 ];
 
-/**
- * Check if current user has specific permission
- */
+// Check if user has permission
 function hasPermission($permission) {
     global $rolePermissions;
     
-    $userRole = getCurrentUserRole();
+    $userType = getCurrentUserType();
     
-    if (!$userRole || !isset($rolePermissions[$userRole])) {
+    if (!$userType || !isset($rolePermissions[$userType])) {
         return false;
     }
     
-    return isset($rolePermissions[$userRole][$permission]) && 
-           $rolePermissions[$userRole][$permission] === true;
+    return $rolePermissions[$userType][$permission] ?? false;
 }
 
-/**
- * Check multiple permissions
- */
+// Check multiple permissions (all must be true)
+function hasAllPermissions($permissions) {
+    foreach ($permissions as $permission) {
+        if (!hasPermission($permission)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Check if user has any of the permissions
 function hasAnyPermission($permissions) {
     foreach ($permissions as $permission) {
         if (hasPermission($permission)) {
@@ -151,74 +99,37 @@ function hasAnyPermission($permissions) {
     return false;
 }
 
-/**
- * Require specific permission to access page
- */
-function requirePermission($permission) {
-    requireLogin();
-    
-    if (!hasPermission($permission)) {
-        $_SESSION['error_message'] = 'You do not have permission to access this page.';
-        header('Location: ' . getDashboardUrl());
-        exit;
-    }
-}
-
-/**
- * Get all permissions for current user's role
- */
+// Get all permissions for current user
 function getUserPermissions() {
     global $rolePermissions;
     
-    $userRole = getCurrentUserRole();
+    $userType = getCurrentUserType();
     
-    if (!$userRole || !isset($rolePermissions[$userRole])) {
+    if (!$userType || !isset($rolePermissions[$userType])) {
         return [];
     }
     
-    $permissions = [];
-    foreach ($rolePermissions[$userRole] as $perm => $allowed) {
-        if ($allowed) {
-            $permissions[] = $perm;
-        }
-    }
-    
-    return $permissions;
+    return $rolePermissions[$userType];
 }
 
-/**
- * Get permission description
- */
-function getPermissionDescription($permission) {
-    return PERMISSIONS[$permission] ?? 'No description available';
-}
-
-/**
- * Check if user can access module
- */
+// Check if user can access module
 function canAccessModule($module) {
     $modulePermissions = [
-        'gate' => ['gate_scan', 'access_control'],
-        'users' => ['manage_users'],
-        'materials' => ['manage_materials', 'approve_materials'],
+        'gate' => ['gate_scan'],
+        'users' => ['user_management'],
         'visitors' => ['manage_visitors'],
-        'incidents' => ['report_incidents', 'manage_incidents'],
-        'reports' => ['view_reports'],
-        'logs' => ['view_logs'],
-        'settings' => ['manage_settings'],
-        'profile' => [] // All users can access their profile
+        'materials' => ['material_inspection', 'approve_materials'],
+        'incidents' => ['report_incident', 'manage_incidents'],
+        'reports' => ['generate_reports', 'view_all_logs'],
+        'logs' => ['view_logs', 'view_all_logs'],
+        'settings' => ['system_settings'],
+        'profile' => ['view_profile']
     ];
     
     if (!isset($modulePermissions[$module])) {
         return false;
     }
     
-    $requiredPerms = $modulePermissions[$module];
-    
-    // If no specific permissions required, allow access
-    if (empty($requiredPerms)) {
-        return true;
-    }
-    
-    return hasAnyPermission($requiredPerms);
+    return hasAnyPermission($modulePermissions[$module]);
 }
+?>

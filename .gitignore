@@ -1,34 +1,16 @@
 ```
-# Compiled and build artifacts
-*.pyc
-__pycache__/
-*.o
-*.obj
-*.class
-*.exe
-*.dll
-*.so
-*.a
-*.out
-
 # Dependencies
-node_modules/
 vendor/
-composer.lock
-*.lock
-venv/
-.venv/
+
+# Logs
+*.log
+
+# Environment
 .env
 .env.local
-.env.*
+*.env.*
 
-# Logs and temp files
-*.log
-*.tmp
-*.swp
-*.swo
-
-# Editors
+# Editor
 .vscode/
 .idea/
 
@@ -36,14 +18,8 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Build and distribution
-dist/
-build/
-target/
-coverage/
-htmlcov/
-.coverage
-.mypy_cache/
-.pytest_cache/
-.gradle/
+# PHP specific
+*.php~
+php_errors.log
+error_log
 ```
