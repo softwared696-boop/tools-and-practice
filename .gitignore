@@ -2,24 +2,58 @@
 # Dependencies
 vendor/
 
-# Logs
+# Logs and temp files
 *.log
+*.tmp
 
 # Environment
 .env
 .env.local
 *.env.*
 
-# Editor
+# Editor/IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# OS generated files
+# OS
 .DS_Store
 Thumbs.db
 
 # PHP specific
 *.php~
-php_errors.log
-error_log
+phpunit.xml.dist
+composer.lock
+
+# Database
+*.sql
+*.db
+*.sqlite
+
+# Cache
+.cache/
+*.cache
+
+# Backup files
+*~
+*.bak
+*.backup
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Session
+sessions/
+*.session
+
+# Uploads
+uploads/
+storage/
+
+# Configuration backups
+config/*.bak
+config/*.backup
 ```
