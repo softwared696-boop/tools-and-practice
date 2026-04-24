@@ -1,135 +1,182 @@
 <?php
 /**
  * Role Permission Matrix
- * Define permissions for each role
+ * Defines what each role can access and do
  */
 
-// Role permissions configuration
-$rolePermissions = [
-    'guard' => [
-        'gate_scan' => true,
-        'view_logs' => true,
-        'view_own_logs' => true,
-        'report_incident' => true,
-        'manage_visitors' => true,
-        'material_inspection' => true,
-        'user_management' => false,
-        'admin_access' => false,
-        'system_settings' => false
+// Prevent direct access
+if (!defined('APP_NAME')) {
+    require_once __DIR__ . '/config.php';
+}
+
+/**
+ * Permission definitions
+ */
+$permissions = [
+    // Gate Officer / Guard
+    ROLE_GUARD => [
+        'dashboard' => ['view'],
+        'gate_scan' => ['view', 'scan_entry', 'scan_exit', 'allow', 'deny'],
+        'inspection' => ['view', 'perform'],
+        'access_logs' => ['view_own_shift'],
+        'materials' => ['view', 'scan'],
+        'incidents' => ['report', 'view_own'],
+        'profile' => ['view', 'edit', 'change_password'],
+        'notifications' => ['view'],
+        'theme' => ['switch']
     ],
-    'admin' => [
-        'gate_scan' => true,
-        'view_logs' => true,
-        'view_all_logs' => true,
-        'generate_reports' => true,
-        'manage_incidents' => true,
-        'user_management' => true,
-        'manage_users' => true,
-        'manage_students' => true,
-        'manage_staff' => true,
-        'admin_access' => true,
-        'system_settings' => false,
-        'audit_access' => false
+    
+    // Admin
+    ROLE_ADMIN => [
+        'dashboard' => ['view'],
+        'users' => ['view', 'create', 'edit', 'delete'],
+        'students' => ['view', 'create', 'edit', 'delete'],
+        'staff' => ['view', 'create', 'edit', 'delete'],
+        'visitors' => ['view', 'register', 'approve'],
+        'gates' => ['view', 'manage'],
+        'gate_scan' => ['view', 'scan_entry', 'scan_exit', 'allow', 'deny'],
+        'access_logs' => ['view_all'],
+        'materials' => ['view', 'register', 'approve', 'reject'],
+        'material_logs' => ['view_all'],
+        'incidents' => ['view', 'review', 'resolve'],
+        'reports' => ['view', 'generate', 'export'],
+        'logs' => ['view_access', 'view_system'],
+        'profile' => ['view', 'edit', 'change_password'],
+        'notifications' => ['view', 'send'],
+        'theme' => ['switch']
     ],
-    'main_admin' => [
-        'gate_scan' => true,
-        'view_logs' => true,
-        'view_all_logs' => true,
-        'generate_reports' => true,
-        'manage_incidents' => true,
-        'user_management' => true,
-        'manage_users' => true,
-        'manage_students' => true,
-        'manage_staff' => true,
-        'admin_access' => true,
-        'system_settings' => true,
-        'admin_management' => true,
-        'audit_access' => true,
-        'full_access' => true
+    
+    // Main Admin
+    ROLE_MAIN_ADMIN => [
+        'dashboard' => ['view'],
+        'analytics' => ['view_all'],
+        'users' => ['view', 'create', 'edit', 'delete'],
+        'students' => ['view', 'create', 'edit', 'delete'],
+        'staff' => ['view', 'create', 'edit', 'delete'],
+        'visitors' => ['view', 'register', 'approve', 'delete'],
+        'gates' => ['view', 'create', 'edit', 'delete', 'configure'],
+        'gate_scan' => ['view', 'scan_entry', 'scan_exit', 'allow', 'deny'],
+        'access_logs' => ['view_all', 'export'],
+        'materials' => ['view', 'register', 'approve', 'reject', 'delete'],
+        'material_logs' => ['view_all', 'export'],
+        'incidents' => ['view', 'review', 'resolve', 'escalate', 'delete'],
+        'escalations' => ['view', 'manage'],
+        'reports' => ['view', 'generate', 'export', 'delete'],
+        'analytics' => ['view', 'export'],
+        'logs' => ['view_all', 'export', 'audit'],
+        'audit_trail' => ['view', 'export'],
+        'settings' => ['view', 'edit_all'],
+        'roles' => ['view', 'create', 'edit', 'delete', 'assign'],
+        'backup' => ['create', 'download'],
+        'system_config' => ['view', 'edit'],
+        'admin_management' => ['view', 'create', 'edit', 'delete'],
+        'profile' => ['view', 'edit', 'change_password'],
+        'notifications' => ['view', 'send', 'broadcast'],
+        'theme' => ['switch']
     ],
-    'student' => [
-        'view_own_logs' => true,
-        'request_material_permission' => true,
-        'view_profile' => true,
-        'edit_profile' => true,
-        'gate_scan' => false,
-        'admin_access' => false
+    
+    // Student
+    ROLE_STUDENT => [
+        'dashboard' => ['view'],
+        'my_access' => ['view'],
+        'my_materials' => ['view', 'request'],
+        'permissions' => ['view'],
+        'profile' => ['view', 'edit', 'change_password', 'change_photo'],
+        'notifications' => ['view'],
+        'theme' => ['switch']
     ],
-    'staff' => [
-        'view_own_logs' => true,
-        'request_material_permission' => true,
-        'approve_materials' => true,
-        'view_profile' => true,
-        'edit_profile' => true,
-        'gate_scan' => false,
-        'admin_access' => false
+    
+    // Staff
+    ROLE_STAFF => [
+        'dashboard' => ['view'],
+        'my_access' => ['view'],
+        'my_materials' => ['view', 'request', 'approve_own_requests'],
+        'recurring_equipment' => ['view', 'request', 'manage'],
+        'approvals' => ['view', 'approve_others'],
+        'profile' => ['view', 'edit', 'change_password', 'change_photo'],
+        'notifications' => ['view'],
+        'theme' => ['switch']
+    ],
+    
+    // Visitor Registration Officer
+    ROLE_VISITOR_OFFICER => [
+        'dashboard' => ['view'],
+        'visitors' => ['view', 'register', 'edit', 'delete'],
+        'visitor_passes' => ['view', 'generate', 'print', 'extend'],
+        'visitor_logs' => ['view'],
+        'verify_visitor' => ['view', 'verify'],
+        'profile' => ['view', 'edit', 'change_password'],
+        'notifications' => ['view'],
+        'theme' => ['switch']
     ]
 ];
 
-// Check if user has permission
-function hasPermission($permission) {
-    global $rolePermissions;
+/**
+ * Check if role has permission
+ */
+function hasPermission($role, $module, $action = null) {
+    global $permissions;
     
-    $userType = getCurrentUserType();
-    
-    if (!$userType || !isset($rolePermissions[$userType])) {
+    if (!isset($permissions[$role])) {
         return false;
     }
     
-    return $rolePermissions[$userType][$permission] ?? false;
-}
-
-// Check multiple permissions (all must be true)
-function hasAllPermissions($permissions) {
-    foreach ($permissions as $permission) {
-        if (!hasPermission($permission)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-// Check if user has any of the permissions
-function hasAnyPermission($permissions) {
-    foreach ($permissions as $permission) {
-        if (hasPermission($permission)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// Get all permissions for current user
-function getUserPermissions() {
-    global $rolePermissions;
-    
-    $userType = getCurrentUserType();
-    
-    if (!$userType || !isset($rolePermissions[$userType])) {
-        return [];
-    }
-    
-    return $rolePermissions[$userType];
-}
-
-// Check if user can access module
-function canAccessModule($module) {
-    $modulePermissions = [
-        'gate' => ['gate_scan'],
-        'users' => ['user_management'],
-        'visitors' => ['manage_visitors'],
-        'materials' => ['material_inspection', 'approve_materials'],
-        'incidents' => ['report_incident', 'manage_incidents'],
-        'reports' => ['generate_reports', 'view_all_logs'],
-        'logs' => ['view_logs', 'view_all_logs'],
-        'settings' => ['system_settings'],
-        'profile' => ['view_profile']
-    ];
-    
-    if (!isset($modulePermissions[$module])) {
+    if (!isset($permissions[$role][$module])) {
         return false;
     }
     
-    return hasAnyPermission($modulePermissions[$module]);
+    if ($action === null) {
+        return true;
+    }
+    
+    return in_array($action, $permissions[$role][$module]);
 }
-?>
+
+/**
+ * Check if current user has permission
+ */
+function currentUserHasPermission($module, $action = null) {
+    if (!isLoggedIn()) {
+        return false;
+    }
+    
+    $role = getCurrentUserRole();
+    return hasPermission($role, $module, $action);
+}
+
+/**
+ * Require permission
+ */
+function requirePermission($module, $action = null) {
+    if (!currentUserHasPermission($module, $action)) {
+        http_response_code(403);
+        if (isAjaxRequest()) {
+            die(json_encode(['success' => false, 'message' => 'Access denied']));
+        }
+        setFlashMessage('error', 'You do not have permission to access this resource');
+        redirectTo(BASE_URL . '/404.php');
+    }
+}
+
+/**
+ * Get all permissions for a role
+ */
+function getRolePermissions($role) {
+    global $permissions;
+    return $permissions[$role] ?? [];
+}
+
+/**
+ * Get available modules for a role
+ */
+function getAvailableModules($role) {
+    return array_keys(getRolePermissions($role));
+}
+
+/**
+ * Check if request is AJAX
+ */
+function isAjaxRequest() {
+    return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+           strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+}

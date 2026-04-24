@@ -1,168 +1,71 @@
 <?php
 /**
- * Login Page
- * Authentication for all user roles
+ * Login Page - University Gate Control System
  */
 
-// Start session and load config
-require_once 'config/config.php';
-require_once 'config/session.php';
-require_once 'config/validation.php';
+require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/config/session.php';
 
 // Redirect if already logged in
 if (isLoggedIn()) {
-    $redirectUrl = getDashboardUrl(getCurrentUserType());
-    header('Location: ' . $redirectUrl);
-    exit;
+    $role = getCurrentUserRole();
+    redirectTo(BASE_URL . '/roles/' . $role . '/dashboard.php');
 }
 
-// Get flash message
+$pageTitle = 'Login - University Gate Control System';
 $flashMessage = getFlashMessage();
-
-// Handle form submission
-$error = '';
-$success = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $userType = $_POST['user_type'] ?? '';
-    $remember = isset($_POST['remember']);
-    $agreed = isset($_POST['agree_terms']);
-    
-    // Validation
-    if (empty($username) || empty($password)) {
-        $error = 'Please enter both username and password.';
-    } elseif (empty($userType)) {
-        $error = 'Please select your role.';
-    } elseif (!$agreed) {
-        $error = 'You must agree to the university rules and system regulations.';
-    } else {
-        // Authenticate user
-        require_once 'config/db.php';
-        
-        $sql = "SELECT u.*, s.student_id, st.staff_id 
-                FROM users u 
-                LEFT JOIN students s ON u.id = s.user_id 
-                LEFT JOIN staff st ON u.id = st.user_id 
-                WHERE u.username = :username AND u.user_type = :user_type AND u.status = 'active'";
-        
-        $user = dbFetchOne($sql, ['username' => $username, 'user_type' => $userType]);
-        
-        if ($user && password_verify($password, $user['password_hash'])) {
-            // Set session variables
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['user_type'] = $user['user_type'];
-            $_SESSION['profile_photo'] = $user['profile_photo'];
-            $_SESSION['theme_preference'] = $user['theme_preference'] ?? 'light';
-            
-            if ($user['student_id']) {
-                $_SESSION['student_id'] = $user['student_id'];
-            }
-            if ($user['staff_id']) {
-                $_SESSION['staff_id'] = $user['staff_id'];
-            }
-            
-            // Update last login
-            dbUpdate("UPDATE users SET last_login = NOW() WHERE id = :id", ['id' => $user['id']]);
-            
-            // Log the login
-            $logSql = "INSERT INTO system_logs (log_type, user_id, action, description, ip_address) 
-                       VALUES ('auth', :user_id, 'login', 'User logged in successfully', :ip)";
-            dbQuery($logSql, ['user_id' => $user['id'], 'ip' => $_SERVER['REMOTE_ADDR'] ?? '']);
-            
-            // Remember me functionality
-            if ($remember) {
-                setcookie('remember_token', bin2hex(random_bytes(32)), time() + (86400 * 30), '/');
-            }
-            
-            // Regenerate session ID for security
-            regenerateSession();
-            
-            // Redirect to appropriate dashboard
-            $redirectUrl = getDashboardUrl($user['user_type']);
-            
-            // Check for redirect after login
-            if (isset($_SESSION['redirect_after_login'])) {
-                $redirectUrl = $_SESSION['redirect_after_login'];
-                unset($_SESSION['redirect_after_login']);
-            }
-            
-            header('Location: ' . $redirectUrl);
-            exit;
-        } else {
-            $error = 'Invalid username, password, or role.';
-            
-            // Log failed attempt
-            $logSql = "INSERT INTO system_logs (log_type, action, description, ip_address) 
-                       VALUES ('auth', 'login_failed', 'Failed login attempt for: ' . sanitizeString($username), :ip)";
-            dbQuery($logSql, ['ip' => $_SERVER['REMOTE_ADDR'] ?? '']);
-        }
-    }
-}
-
-function getDashboardUrl($userType) {
-    $dashboards = [
-        'guard' => 'roles/guard/dashboard.php',
-        'admin' => 'roles/admin/dashboard.php',
-        'main_admin' => 'roles/main_admin/dashboard.php',
-        'student' => 'roles/student/dashboard.php',
-        'staff' => 'roles/staff/dashboard.php'
-    ];
-    
-    return $dashboards[$userType] ?? 'index.php';
-}
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - University Gate Control System</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/forms.css">
+    <title><?php echo escape($pageTitle); ?></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="<?php echo CSS_URL; ?>/style.css">
+    <link rel="stylesheet" href="<?php echo CSS_URL; ?>/forms.css">
 </head>
 <body class="login-page">
     <div class="login-container">
         <div class="login-box">
             <div class="login-header">
-                <img src="assets/images/logo/university-logo.png" alt="Logo" class="login-logo" onerror="this.style.display='none'">
-                <h1>University Gate Control</h1>
-                <p>Sign in to access your account</p>
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span class="logo-text">Gate Control</span>
+                </div>
+                <h1>Welcome Back</h1>
+                <p>Sign in to access your dashboard</p>
+                
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <svg class="icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                    </svg>
+                    <svg class="icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
             </div>
             
-            <?php if ($error): ?>
-                <div class="alert alert-danger">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    <?php echo htmlspecialchars($error); ?>
-                </div>
-            <?php endif; ?>
-            
-            <?php if ($success): ?>
-                <div class="alert alert-success">
-                    <?php echo htmlspecialchars($success); ?>
-                </div>
-            <?php endif; ?>
-            
             <?php if ($flashMessage): ?>
-                <div class="alert alert-<?php echo htmlspecialchars($flashMessage['type']); ?>">
-                    <?php echo htmlspecialchars($flashMessage['message']); ?>
-                </div>
+            <div class="alert alert-<?php echo escape($flashMessage['type']); ?>">
+                <?php echo escape($flashMessage['message']); ?>
+            </div>
             <?php endif; ?>
             
-            <form method="POST" action="" class="login-form" id="loginForm">
+            <form class="login-form" id="loginForm" action="<?php echo BASE_URL; ?>/actions/auth/login-action.php" method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                 
                 <div class="form-group">
-                    <label for="user_type">Select Role</label>
-                    <select id="user_type" name="user_type" required>
+                    <label for="role">Select Role</label>
+                    <select id="role" name="role" required>
                         <option value="">-- Select Your Role --</option>
                         <option value="guard">Gate Officer / Security Guard</option>
                         <option value="admin">Admin</option>
@@ -174,61 +77,109 @@ function getDashboardUrl($userType) {
                 
                 <div class="form-group">
                     <label for="username">Username / ID</label>
-                    <input type="text" id="username" name="username" required 
-                           placeholder="Enter your username or ID"
-                           value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>">
+                    <div class="input-with-icon">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <input type="text" id="username" name="username" required autocomplete="username">
+                    </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required 
-                           placeholder="Enter your password">
-                    <button type="button" class="toggle-password" onclick="togglePassword()">
-                        👁️
-                    </button>
+                    <div class="input-with-icon">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <input type="password" id="password" name="password" required autocomplete="current-password">
+                        <button type="button" class="password-toggle" onclick="togglePassword()">
+                            <svg class="icon" id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="form-options">
                     <label class="checkbox-label">
-                        <input type="checkbox" name="remember" <?php echo isset($_POST['remember']) ? 'checked' : ''; ?>>
+                        <input type="checkbox" name="remember" value="1">
                         <span>Remember me</span>
                     </label>
-                    <a href="forgot-password.php" class="forgot-link">Forgot Password?</a>
+                    <a href="<?php echo BASE_URL; ?>/forgot-password.php" class="forgot-link">Forgot Password?</a>
                 </div>
                 
                 <div class="form-group">
-                    <label class="checkbox-label terms-checkbox">
-                        <input type="checkbox" name="agree_terms" required 
-                               <?php echo isset($_POST['agree_terms']) ? 'checked' : ''; ?>>
+                    <label class="checkbox-label required">
+                        <input type="checkbox" name="terms" required>
                         <span>I agree with university rules and system regulations</span>
                     </label>
                 </div>
                 
-                <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                <button type="submit" class="btn btn-primary btn-block btn-lg">
+                    Sign In
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                        <polyline points="12 5 19 12 12 19"/>
+                    </svg>
+                </button>
             </form>
             
             <div class="login-footer">
-                <p><a href="index.php">← Back to Home</a></p>
+                <p><a href="<?php echo BASE_URL; ?>/index.php">← Back to Home</a></p>
+                <p class="help-text">Need help? Contact <a href="mailto:support@university.edu">support@university.edu</a></p>
+            </div>
+        </div>
+        
+        <div class="login-info">
+            <div class="login-info-content">
+                <h2>Secure Campus Access Management</h2>
+                <p>Manage gate operations, track visitors, and monitor materials with our comprehensive security platform.</p>
+                
+                <div class="info-features">
+                    <div class="info-feature">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                        <span>Enterprise Security</span>
+                    </div>
+                    <div class="info-feature">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        <span>Real-time Monitoring</span>
+                    </div>
+                    <div class="info-feature">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <line x1="9" y1="9" x2="9.01" y2="9"/>
+                            <line x1="15" y1="9" x2="15.01" y2="9"/>
+                            <line x1="9" y1="15" x2="15" y2="15"/>
+                        </svg>
+                        <span>ID Verification</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
-    <script src="assets/js/app.js"></script>
+    <script src="<?php echo JS_URL; ?>/app.js"></script>
+    <script src="<?php echo JS_URL; ?>/theme.js"></script>
     <script>
         function togglePassword() {
             const passwordInput = document.getElementById('password');
-            passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
-        }
-        
-        // Form validation
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            const userType = document.getElementById('user_type').value;
-            if (!userType) {
-                e.preventDefault();
-                alert('Please select your role.');
-                document.getElementById('user_type').focus();
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line x1="1" y1="1" x2="23" y2="23"/>';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
             }
-        });
+        }
     </script>
 </body>
 </html>

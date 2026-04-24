@@ -1,107 +1,163 @@
 <?php
 /**
  * Global Constants
+ * Additional constants for the application
  */
 
-// Define if not already defined
+// Prevent direct access
 if (!defined('APP_NAME')) {
-    define('APP_NAME', 'University Gate Control System');
+    require_once __DIR__ . '/config.php';
 }
 
-// User Types
-define('USER_TYPE_STUDENT', 'student');
-define('USER_TYPE_STAFF', 'staff');
-define('USER_TYPE_VISITOR', 'visitor');
-define('USER_TYPE_GUARD', 'guard');
-define('USER_TYPE_ADMIN', 'admin');
-define('USER_TYPE_MAIN_ADMIN', 'main_admin');
+// Application Paths
+define('ROOT_PATH', dirname(__DIR__));
+define('CONFIG_PATH', ROOT_PATH . '/config');
+define('INCLUDES_PATH', ROOT_PATH . '/includes');
+define('MODULES_PATH', ROOT_PATH . '/modules');
+define('ROLES_PATH', ROOT_PATH . '/roles');
+define('ACTIONS_PATH', ROOT_PATH . '/actions');
+define('AJAX_PATH', ROOT_PATH . '/ajax');
+define('DATABASE_PATH', ROOT_PATH . '/database');
+define('LOGS_PATH', ROOT_PATH . '/logs');
+define('API_PATH', ROOT_PATH . '/api');
 
-// Access Decision
-define('ACCESS_ALLOWED', 'allowed');
-define('ACCESS_DENIED', 'denied');
-define('ACCESS_PENDING', 'pending');
+// Upload Directories
+define('PROFILE_PHOTOS_DIR', UPLOAD_DIR . 'profile-photos/');
+define('ID_CARDS_DIR', UPLOAD_DIR . 'id-cards/');
+define('QR_CODES_DIR', UPLOAD_DIR . 'qr-codes/');
+define('VISITOR_PASSES_DIR', UPLOAD_DIR . 'visitor-passes/');
+define('EVIDENCE_DIR', UPLOAD_DIR . 'evidence/');
+define('MATERIALS_DIR', UPLOAD_DIR . 'materials/');
+define('REPORTS_DIR', UPLOAD_DIR . 'reports/');
 
-// Access Types
-define('ACCESS_ENTRY', 'entry');
-define('ACCESS_EXIT', 'exit');
-
-// Material Categories
-define('MATERIAL_LAPTOP', 'laptop');
-define('MATERIAL_COMPUTER', 'computer');
-define('MATERIAL_TABLET', 'tablet');
-define('MATERIAL_EQUIPMENT', 'equipment');
-define('MATERIAL_PERSONAL', 'personal');
-define('MATERIAL_UNIVERSITY_ASSET', 'university_asset');
-
-// Incident Severity
-define('SEVERITY_LOW', 'low');
-define('SEVERITY_MEDIUM', 'medium');
-define('SEVERITY_HIGH', 'high');
-define('SEVERITY_CRITICAL', 'critical');
-
-// Incident Status
-define('INCIDENT_REPORTED', 'reported');
-define('INCIDENT_UNDER_REVIEW', 'under_review');
-define('INCIDENT_ESCALATED', 'escalated');
-define('INCIDENT_RESOLVED', 'resolved');
-define('INCIDENT_CLOSED', 'closed');
-
-// Visitor Status
-define('VISITOR_PENDING', 'pending');
-define('VISITOR_APPROVED', 'approved');
-define('VISITOR_REJECTED', 'rejected');
-define('VISITOR_CHECKED_IN', 'checked_in');
-define('VISITOR_CHECKED_OUT', 'checked_out');
-
-// Notification Types
-define('NOTIF_INFO', 'info');
-define('NOTIF_WARNING', 'warning');
-define('NOTIF_ERROR', 'error');
-define('NOTIF_SUCCESS', 'success');
-define('NOTIF_ALERT', 'alert');
-
-// Gate Status
-define('GATE_ACTIVE', 'active');
-define('GATE_INACTIVE', 'inactive');
-define('GATE_MAINTENANCE', 'maintenance');
-
-// Date Formats
-define('DATE_FORMAT_DISPLAY', 'M d, Y');
-define('TIME_FORMAT_DISPLAY', 'h:i A');
-define('DATETIME_FORMAT_DISPLAY', 'M d, Y h:i A');
-define('DATE_FORMAT_DB', 'Y-m-d');
-define('DATETIME_FORMAT_DB', 'Y-m-d H:i:s');
-
-// Status Colors (for UI)
-$statusColors = [
-    'active' => '#10b981',
-    'inactive' => '#6b7280',
-    'suspended' => '#ef4444',
-    'allowed' => '#10b981',
-    'denied' => '#ef4444',
-    'pending' => '#f59e0b',
-    'approved' => '#10b981',
-    'rejected' => '#ef4444',
-    'low' => '#10b981',
-    'medium' => '#f59e0b',
-    'high' => '#ef4444',
-    'critical' => '#dc2626'
+// Ensure upload directories exist
+$uploadDirs = [
+    PROFILE_PHOTOS_DIR,
+    ID_CARDS_DIR,
+    QR_CODES_DIR,
+    VISITOR_PASSES_DIR,
+    EVIDENCE_DIR,
+    MATERIALS_DIR,
+    REPORTS_DIR
 ];
 
-function getStatusColor($status) {
-    global $statusColors;
-    return $statusColors[$status] ?? '#6b7280';
+foreach ($uploadDirs as $dir) {
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
 }
 
+// HTTP Status Codes
+define('HTTP_OK', 200);
+define('HTTP_CREATED', 201);
+define('HTTP_BAD_REQUEST', 400);
+define('HTTP_UNAUTHORIZED', 401);
+define('HTTP_FORBIDDEN', 403);
+define('HTTP_NOT_FOUND', 404);
+define('HTTP_CONFLICT', 409);
+define('HTTP_INTERNAL_ERROR', 500);
+
+// Response Messages
+define('MSG_SUCCESS', 'Operation completed successfully');
+define('MSG_ERROR', 'An error occurred');
+define('MSG_UNAUTHORIZED', 'Unauthorized access');
+define('MSG_FORBIDDEN', 'Access denied');
+define('MSG_NOT_FOUND', 'Resource not found');
+define('MSG_VALIDATION_ERROR', 'Validation failed');
+
+// Gate Status
+define('GATE_OPEN', 'open');
+define('GATE_CLOSED', 'closed');
+define('GATE_MAINTENANCE', 'maintenance');
+
+// User Status
+define('USER_ACTIVE', 'active');
+define('USER_INACTIVE', 'inactive');
+define('USER_SUSPENDED', 'suspended');
+
 // Gender Options
-$genderOptions = ['male', 'female', 'other'];
+define('GENDER_MALE', 'male');
+define('GENDER_FEMALE', 'female');
+define('GENDER_OTHER', 'other');
 
-// Employment Types
-$employmentTypes = ['full_time', 'part_time', 'contract', 'temporary'];
+// Department Types
+define('DEPT_ACADEMIC', 'academic');
+define('DEPT_ADMINISTRATIVE', 'administrative');
+define('DEPT_SECURITY', 'security');
+define('DEPT_MAINTENANCE', 'maintenance');
 
-// ID Types
-$idTypes = ['national_id', 'passport', 'drivers_license', 'other'];
+// Notification Types
+define('NOTIFICATION_INFO', 'info');
+define('NOTIFICATION_WARNING', 'warning');
+define('NOTIFICATION_ERROR', 'error');
+define('NOTIFICATION_SUCCESS', 'success');
 
-// Permission Types
-$permissionTypes = ['one_time', 'recurring', 'permanent'];
-?>
+// Priority Levels
+define('PRIORITY_LOW', 'low');
+define('PRIORITY_NORMAL', 'normal');
+define('PRIORITY_HIGH', 'high');
+define('PRIORITY_URGENT', 'urgent');
+
+// Shift Types
+define('SHIFT_MORNING', 'morning');
+define('SHIFT_AFTERNOON', 'afternoon');
+define('SHIFT_NIGHT', 'night');
+
+// Days of Week
+define('DAYS_WEEK', ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']);
+
+// Months
+define('MONTHS', [
+    1 => 'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+]);
+
+// Time Intervals (in minutes)
+define('INTERVAL_15_MIN', 15);
+define('INTERVAL_30_MIN', 30);
+define('INTERVAL_60_MIN', 60);
+
+// Scanner Settings
+define('SCANNER_TIMEOUT', 5000); // milliseconds
+define('SCANNER_RETRY_COUNT', 3);
+
+// Report Formats
+define('REPORT_FORMAT_PDF', 'pdf');
+define('REPORT_FORMAT_CSV', 'csv');
+define('REPORT_FORMAT_XLSX', 'xlsx');
+
+// Email Settings (for future use)
+define('EMAIL_FROM', 'noreply@university.edu');
+define('EMAIL_FROM_NAME', 'University Gate Control System');
+define('EMAIL_REPLY_TO', 'support@university.edu');
+
+// SMS Settings (for future use)
+define('SMS_ENABLED', false);
+
+// Backup Settings
+define('BACKUP_ENABLED', true);
+define('BACKUP_RETENTION_DAYS', 30);
+define('BACKUP_DIR', DATABASE_PATH . '/backup/');
+
+// Session Keys
+define('SESSION_USER_ID', 'user_id');
+define('SESSION_USERNAME', 'username');
+define('SESSION_ROLE', 'user_role');
+define('SESSION_EMAIL', 'email');
+
+// Cookie Names
+define('COOKIE_THEME', 'theme_preference');
+define('COOKIE_REMEMBER', 'remember_token');
+
+// API Rate Limiting
+define('API_RATE_LIMIT', 100); // requests per minute
+define('API_RATE_WINDOW', 60); // seconds
+
+// Debug Mode
+define('DEBUG_MODE', false);
+
+// Maintenance Mode
+define('MAINTENANCE_MODE', false);
+
+// Version Check URL (for updates)
+define('VERSION_CHECK_URL', '');
