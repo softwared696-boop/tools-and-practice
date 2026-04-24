@@ -22,12 +22,11 @@ function getDBConnection() {
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
-                PDO::ATTR_PERSISTENT => false
             ];
             
             $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
         } catch (PDOException $e) {
-            // Log error but don't expose details in production
+            // Log error but don't expose details to user
             error_log("Database connection failed: " . $e->getMessage());
             die("Database connection failed. Please contact system administrator.");
         }
@@ -44,13 +43,13 @@ function dbQuery($sql, $params = []) {
     return $stmt;
 }
 
-// Fetch single record
+// Fetch single row
 function dbFetchOne($sql, $params = []) {
     $stmt = dbQuery($sql, $params);
     return $stmt->fetch();
 }
 
-// Fetch all records
+// Fetch all rows
 function dbFetchAll($sql, $params = []) {
     $stmt = dbQuery($sql, $params);
     return $stmt->fetchAll();
@@ -64,32 +63,15 @@ function dbInsert($sql, $params = []) {
     return $pdo->lastInsertId();
 }
 
-// Update affected rows
+// Update and return affected rows
 function dbUpdate($sql, $params = []) {
     $stmt = dbQuery($sql, $params);
     return $stmt->rowCount();
 }
 
-// Delete affected rows
+// Delete and return affected rows
 function dbDelete($sql, $params = []) {
     $stmt = dbQuery($sql, $params);
     return $stmt->rowCount();
 }
-
-// Begin transaction
-function dbBeginTransaction() {
-    $pdo = getDBConnection();
-    $pdo->beginTransaction();
-}
-
-// Commit transaction
-function dbCommit() {
-    $pdo = getDBConnection();
-    $pdo->commit();
-}
-
-// Rollback transaction
-function dbRollback() {
-    $pdo = getDBConnection();
-    $pdo->rollBack();
-}
+?>
